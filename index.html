@@ -1,0 +1,141 @@
+<!DOCTYPE HTML>
+<html lang="ja">
+<title>CSV File Converter</title>
+
+<head prefix="og: http://ogp.me/ns# fb: http://ogp.me/ns/fb# article: http://ogp.me/ns/article#">
+  <meta charset="UTF-8" name="viewport"
+    content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta property="og:title" content="CSV File Converter" />
+  <meta property="og:url" content="https://linkevery2s.github.io/csvfileconvertor" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://linkevery2s.github.io/csvfileconvertor/ogp.png" />
+  <meta name="description" content="ドラッグ&ドロップで簡単に、csvからjsonファイルに変換できます。" />
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="CSV File Converter" />
+  <meta name="twitter:image" content="https://linkevery2s.github.io/csvfileconvertor/ogp.png" />
+  <meta name="keywords" content="csv, opendata, オープンデータ" />
+  <style>
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+
+    }
+
+    #drop-area {
+      border: 2px dashed #ccc;
+      border-radius: 10px;
+      padding: 20px;
+      width: 80%;
+      max-width: 600px;
+      background-color: #f9f9f9;
+      cursor: pointer;
+    }
+
+    #drop-area.hover {
+      background-color: #e0e0e0;
+    }
+
+    #output {
+      margin-top: 20px;
+    }
+  </style>
+
+  <script type="module">
+    const dropArea = document.getElementById('drop-area');
+    const fileInput = document.getElementById('file-input');
+    const output = document.getElementById('output');
+
+    // ドラッグアンドドロップイベントを設定
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropArea.classList.add('hover');
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.classList.remove('hover');
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.classList.remove('hover');
+      handleFile(e.dataTransfer.files[0]);
+    });
+
+    dropArea.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      handleFile(e.target.files[0]);
+    });
+
+    // ファイルを処理
+    function handleFile(file) {
+      if (file && file.type === 'text/csv') {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const csvData = e.target.result;
+          const jsonData = csvToJson(csvData);
+          downloadJson(jsonData, file.name.replace('.csv', '.json'));
+        };
+        reader.readAsText(file);
+      } else {
+        alert('Please upload a valid CSV file.');
+      }
+    }
+
+    // CSVをJSONに変換
+    function csvToJson(csv) {
+      const lines = csv.split('\n');
+      const headers = lines[0].split(',');
+      const json = lines.slice(1).map(line => {
+        const values = line.split(',');
+        return headers.reduce((acc, header, index) => {
+          acc[header.trim()] = values[index]?.trim();
+          return acc;
+        }, {});
+      });
+      return json;
+    }
+
+    // JSONをダウンロード
+    function downloadJson(jsonData, filename) {
+      const jsonString = JSON.stringify(jsonData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      output.innerHTML = `<p>File converted and ready for download: <strong>${filename}</strong></p>`;
+    }
+
+  </script>
+
+</head>
+
+<body>
+  <h1>CSV File Converter</h1>
+  <center>
+    <div id="drop-area">
+      <p>Drag & Drop CSV File Here</p>
+      <p>or Click to Select</p>
+      <input type="file" id="file-input" accept=".csv" hidden>
+    </div>
+  </center>
+  <div id="output"></div>
+
+
+</body>
+
+</html>
